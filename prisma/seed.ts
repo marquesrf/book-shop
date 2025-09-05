@@ -1,16 +1,16 @@
 // prisma/seed.ts
-import { PrismaClient, TipoAnuncio, CondicaoLivro } from '@prisma/client';
-import { faker } from '@faker-js/faker';
+import { PrismaClient, TipoAnuncio, CondicaoLivro } from "@prisma/client";
+import { faker } from "@faker-js/faker";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Iniciando o processo de seeding...');
+  console.log("Iniciando o processo de seeding...");
 
   // Limpar dados existentes
   await prisma.anuncio.deleteMany({});
   await prisma.user.deleteMany({});
-  console.log('Banco de dados limpo.');
+  console.log("Banco de dados limpo.");
 
   // Criar 5 usuários
   const users = [];
@@ -19,7 +19,7 @@ async function main() {
       data: {
         name: faker.person.fullName(),
         email: faker.internet.email(),
-        password: 'password123', // Lembre-se, em produção use hash!
+        password: "password123", // Lembre-se, em produção use hash!
       },
     });
     users.push(user);
@@ -30,30 +30,42 @@ async function main() {
   for (let i = 0; i < 20; i++) {
     const randomUser = users[Math.floor(Math.random() * users.length)];
     if (!randomUser) {
-      throw new Error('No users available to assign as owner.');
+      throw new Error("No users available to assign as owner.");
     }
     await prisma.anuncio.create({
       data: {
         titulo: faker.lorem.words(3),
         autor: faker.person.fullName(),
         descricao: faker.lorem.paragraph(),
-        tipo: faker.helpers.arrayElement([TipoAnuncio.VENDA, TipoAnuncio.TROCA, TipoAnuncio.COMPRA]),
-        condicao: faker.helpers.arrayElement([CondicaoLivro.NOVO, CondicaoLivro.SEMINOVO, CondicaoLivro.USADO]),
+        tipo: faker.helpers.arrayElement([
+          TipoAnuncio.VENDA,
+          TipoAnuncio.TROCA,
+          TipoAnuncio.COMPRA,
+        ]),
+        condicao: faker.helpers.arrayElement([
+          CondicaoLivro.NOVO,
+          CondicaoLivro.SEMINOVO,
+          CondicaoLivro.USADO,
+        ]),
         preco: parseFloat(faker.commerce.price({ min: 10, max: 100 })),
         ownerId: randomUser.id,
       },
     });
   }
-  console.log('20 anúncios criados.');
+  console.log("20 anúncios criados.");
 
-  console.log('Seeding finalizado com sucesso!');
+  console.log("Seeding finalizado com sucesso!");
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
+async function runSeed() {
+  try {
+    await main();
     await prisma.$disconnect();
-  });
+  } catch (error) {
+    console.error(error);
+    await prisma.$disconnect();
+    process.exit(1);
+  }
+}
+
+runSeed();
